@@ -89,4 +89,21 @@ actor LocalDataStore: DataStoreProtocol {
         try modelContext.save()
         AppLogger.persistence.info("Settings saved")
     }
+
+    /// Updates settings inside the actor boundary (avoids cross-actor @Model mutation).
+    func updateSettings(
+        reminderWaitMinutes: Int? = nil,
+        notificationType: NotificationType? = nil,
+        isPaused: Bool? = nil,
+        activeStartHour: Int? = nil,
+        activeEndHour: Int? = nil
+    ) async throws {
+        let settings = try await loadSettings()
+        if let v = reminderWaitMinutes { settings.reminderWaitMinutes = v }
+        if let v = notificationType { settings.notificationType = v }
+        if let v = isPaused { settings.isPaused = v }
+        if let v = activeStartHour { settings.activeStartHour = v }
+        if let v = activeEndHour { settings.activeEndHour = v }
+        try modelContext.save()
+    }
 }

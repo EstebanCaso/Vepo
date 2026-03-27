@@ -19,4 +19,11 @@ protocol DataStoreProtocol: Sendable {
 
     func loadSettings() async throws -> UserSettings
     func saveSettings(_ settings: UserSettings) async throws
+    func updateSettings(
+        reminderWaitMinutes: Int?,
+        notificationType: NotificationType?,
+        isPaused: Bool?,
+        activeStartHour: Int?,
+        activeEndHour: Int?
+    ) async throws
 }

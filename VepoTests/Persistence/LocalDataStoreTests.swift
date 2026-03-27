@@ -131,10 +131,14 @@ struct LocalDataStoreTests {
     func saveAndReloadSettings() async throws {
         let store = try makeTestStore()
 
-        let settings = try await store.loadSettings()
-        settings.reminderWaitMinutes = 30
-        settings.notificationType = .vibration
-        try await store.saveSettings(settings)
+        // Use updateSettings to mutate inside the actor boundary
+        try await store.updateSettings(
+            reminderWaitMinutes: 30,
+            notificationType: .vibration,
+            isPaused: nil,
+            activeStartHour: nil,
+            activeEndHour: nil
+        )
 
         let reloaded = try await store.loadSettings()
         #expect(reloaded.reminderWaitMinutes == 30)
