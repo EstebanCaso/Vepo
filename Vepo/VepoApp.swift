@@ -90,7 +90,9 @@ struct VepoApp: App {
                 .environment(eventLogVM)
                 .environment(settingsVM)
                 .task {
-                    // Start BLE → DrinkDetector pipeline
+                    // Start a hydration session and begin processing
+                    _ = try? await dataStore.startNewSession()
+
                     if let mock = mockBLEManager {
                         AppLogger.ble.info("Running in MOCK BLE mode")
                         await mock.simulateConnect()
@@ -98,17 +100,43 @@ struct VepoApp: App {
                     } else {
                         await drinkDetector.startProcessing(bleManager.sensorReadings)
                     }
+
+                    // When the task is cancelled (view disappears), end the session
+                    if let session = try? await dataStore.fetchCurrentSession() {
+                        try? await dataStore.endSession(session)
+                    }
                 }
                 .task {
                     // Persist events, reschedule notifications, haptic feedback
                     for await event in drinkDetector.drinkEvents {
+                        // Link event to current session before saving
+                        if let session = try? await dataStore.fetchCurrentSession() {
+                            event.session = session
+                        }
                         try? await dataStore.saveDrinkEvent(event)
 
+                        // Load user settings for notification behavior
                         let settings = try? await dataStore.loadSettings()
                         let minutes = settings?.reminderWaitMinutes ?? 60
-                        await notificationService.resetTimer(afterMinutes: minutes)
+                        let notifType = settings?.notificationType ?? .both
+                        let startHour = settings?.activeStartHour ?? 0
+                        let endHour = settings?.activeEndHour ?? 24
+                        let isPaused = settings?.isPaused ?? false
 
-                        hapticService.playDrinkConfirmation()
+                        // Reschedule notification with full settings context
+                        if !isPaused {
+                            await notificationService.resetTimer(
+                                afterMinutes: minutes,
+                                notificationType: notifType,
+                                activeStartHour: startHour,
+                                activeEndHour: endHour
+                            )
+                        }
+
+                        // Play haptic based on notification type preference
+                        if notifType == .vibration || notifType == .both {
+                            hapticService.playDrinkConfirmation()
+                        }
                     }
                 }
                 .task {

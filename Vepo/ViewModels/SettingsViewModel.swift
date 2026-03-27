@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UserNotifications
 
 /// ViewModel for user settings.
 /// Loads/saves UserSettings from SwiftData and notifies the notification service.
@@ -38,7 +39,9 @@ final class SettingsViewModel {
             AppLogger.persistence.error("Failed to load settings: \(error.localizedDescription)")
         }
 
-        hasNotificationPermission = await notificationService.requestPermission()
+        // Check current permission status without re-prompting
+        let settings2 = await UNUserNotificationCenter.current().notificationSettings()
+        hasNotificationPermission = settings2.authorizationStatus == .authorized
     }
 
     func save() async {
@@ -52,7 +55,12 @@ final class SettingsViewModel {
             try await dataStore.saveSettings(settings)
 
             if !isPaused {
-                await notificationService.resetTimer(afterMinutes: reminderMinutes)
+                await notificationService.resetTimer(
+                    afterMinutes: reminderMinutes,
+                    notificationType: notificationType,
+                    activeStartHour: activeStartHour,
+                    activeEndHour: activeEndHour
+                )
             } else {
                 await notificationService.cancelPendingReminders()
             }
