@@ -20,9 +20,9 @@ enum SensorPacketParser {
     /// Parse a raw Data packet into a SensorReading.
     /// - Parameter data: Raw bytes from BLE characteristic
     /// - Returns: Parsed SensorReading with current Date as timestamp
-    static func parse(_ data: Data) throws(ParseError) -> SensorReading {
+    static func parse(_ data: Data) throws -> SensorReading {
         guard data.count == BLEConstants.expectedPacketSize else {
-            throw .invalidLength(
+            throw ParseError.invalidLength(
                 expected: BLEConstants.expectedPacketSize,
                 actual: data.count
             )
@@ -37,7 +37,7 @@ enum SensorPacketParser {
 
         guard accX.isFinite, accY.isFinite, accZ.isFinite,
               gyroX.isFinite, gyroY.isFinite, gyroZ.isFinite else {
-            throw .invalidData
+            throw ParseError.invalidData
         }
 
         return SensorReading(

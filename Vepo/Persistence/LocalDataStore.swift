@@ -9,13 +9,13 @@ actor LocalDataStore: DataStoreProtocol {
 
     // MARK: - Drink Events
 
-    func saveDrinkEvent(_ event: DrinkEvent) throws {
+    func saveDrinkEvent(_ event: DrinkEvent) async throws {
         modelContext.insert(event)
         try modelContext.save()
-        AppLogger.persistence.info("Saved drink event at \(event.timestamp)")
+        AppLogger.persistence.info("Saved drink event")
     }
 
-    func fetchEvents(for date: Date) throws -> [DrinkEvent] {
+    func fetchEvents(for date: Date) async throws -> [DrinkEvent] {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
@@ -32,7 +32,7 @@ actor LocalDataStore: DataStoreProtocol {
         return try modelContext.fetch(descriptor)
     }
 
-    func fetchLatestEvent() throws -> DrinkEvent? {
+    func fetchLatestEvent() async throws -> DrinkEvent? {
         var descriptor = FetchDescriptor<DrinkEvent>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
@@ -40,14 +40,14 @@ actor LocalDataStore: DataStoreProtocol {
         return try modelContext.fetch(descriptor).first
     }
 
-    func deleteEvent(_ event: DrinkEvent) throws {
+    func deleteEvent(_ event: DrinkEvent) async throws {
         modelContext.delete(event)
         try modelContext.save()
     }
 
     // MARK: - Sessions
 
-    func fetchCurrentSession() throws -> HydrationSession? {
+    func fetchCurrentSession() async throws -> HydrationSession? {
         let predicate = #Predicate<HydrationSession> { session in
             session.endTime == nil
         }
@@ -58,23 +58,23 @@ actor LocalDataStore: DataStoreProtocol {
         return try modelContext.fetch(descriptor).first
     }
 
-    func startNewSession() throws -> HydrationSession {
+    func startNewSession() async throws -> HydrationSession {
         let session = HydrationSession()
         modelContext.insert(session)
         try modelContext.save()
-        AppLogger.persistence.info("Started new session \(session.id)")
+        AppLogger.persistence.info("Started new session")
         return session
     }
 
-    func endSession(_ session: HydrationSession) throws {
+    func endSession(_ session: HydrationSession) async throws {
         session.endTime = .now
         try modelContext.save()
-        AppLogger.persistence.info("Ended session \(session.id)")
+        AppLogger.persistence.info("Ended session")
     }
 
     // MARK: - Settings
 
-    func loadSettings() throws -> UserSettings {
+    func loadSettings() async throws -> UserSettings {
         let descriptor = FetchDescriptor<UserSettings>()
         if let existing = try modelContext.fetch(descriptor).first {
             return existing
@@ -85,7 +85,7 @@ actor LocalDataStore: DataStoreProtocol {
         return defaults
     }
 
-    func saveSettings(_ settings: UserSettings) throws {
+    func saveSettings(_ settings: UserSettings) async throws {
         try modelContext.save()
         AppLogger.persistence.info("Settings saved")
     }

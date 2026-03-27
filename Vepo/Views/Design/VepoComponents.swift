@@ -20,10 +20,10 @@ struct VepoCard<Content: View>: View {
 struct VepoButton: View {
     let title: String
     let icon: String?
-    let style: ButtonStyle
+    let style: VepoButtonStyle
     let action: () -> Void
 
-    enum ButtonStyle {
+    enum VepoButtonStyle {
         case primary
         case secondary
         case ghost
@@ -32,7 +32,7 @@ struct VepoButton: View {
     init(
         _ title: String,
         icon: String? = nil,
-        style: ButtonStyle = .primary,
+        style: VepoButtonStyle = .primary,
         action: @escaping () -> Void
     ) {
         self.title = title

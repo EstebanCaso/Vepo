@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import SwiftData
 
 /// ViewModel for the drink event log.

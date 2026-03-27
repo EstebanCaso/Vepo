@@ -78,7 +78,7 @@ struct LiveCounterView: View {
     }
 
     private var dropIcon: String {
-        urgencyLevel < 0.3 ? "drop.fill" : "drop.halffull"
+        urgencyLevel < 0.3 ? "drop.fill" : "drop"
     }
 
     private var counterAccessibilityLabel: String {

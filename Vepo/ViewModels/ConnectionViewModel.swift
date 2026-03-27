@@ -1,22 +1,18 @@
 import CoreBluetooth
 import Foundation
+import Observation
 
 /// ViewModel for the BLE connection screen.
-/// Wraps BLEManager and exposes connection state for SwiftUI.
+/// Holds observable state synced from BLEManager via callback.
 @Observable
 final class ConnectionViewModel {
     private let bleManager: BLEManager
     private let hapticService: HapticService
 
-    // MARK: - State
+    // MARK: - Observable State (synced from BLEManager)
 
-    var connectionState: BLEConnectionState {
-        bleManager.connectionState
-    }
-
-    var discoveredPeripherals: [CBPeripheral] {
-        bleManager.discoveredPeripherals
-    }
+    var connectionState: BLEConnectionState = .idle
+    var discoveredPeripherals: [CBPeripheral] = []
 
     var isScanning: Bool {
         connectionState == .scanning
@@ -44,6 +40,17 @@ final class ConnectionViewModel {
     init(bleManager: BLEManager, hapticService: HapticService = HapticService()) {
         self.bleManager = bleManager
         self.hapticService = hapticService
+
+        // Sync initial state
+        self.connectionState = bleManager.connectionState
+        self.discoveredPeripherals = bleManager.discoveredPeripherals
+
+        // Subscribe to changes
+        bleManager.onStateChanged = { [weak self] in
+            guard let self else { return }
+            self.connectionState = bleManager.connectionState
+            self.discoveredPeripherals = bleManager.discoveredPeripherals
+        }
     }
 
     // MARK: - Actions

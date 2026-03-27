@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import OSLog
 
 /// Orchestrates drink event detection by processing a stream of SensorReadings
@@ -30,7 +31,7 @@ final class DrinkDetector {
 
     // MARK: - Init
 
-    init() {
+    nonisolated init() {
         let (stream, continuation) = AsyncStream.makeStream(of: DrinkEvent.self)
         self.drinkEvents = stream
         self.eventContinuation = continuation

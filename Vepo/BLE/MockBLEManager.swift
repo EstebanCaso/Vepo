@@ -1,5 +1,6 @@
 import CoreBluetooth
 import Foundation
+import Observation
 import OSLog
 
 /// Mock BLE manager that generates simulated sensor data.

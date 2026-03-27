@@ -7,6 +7,7 @@ import SwiftData
 struct SessionViewModelTests {
 
     /// Creates an in-memory data store and view model for testing
+    @MainActor
     private func makeTestComponents() throws -> (LocalDataStore, DrinkDetector, SessionViewModel) {
         let schema = Schema([
             DrinkEvent.self,
@@ -25,6 +26,7 @@ struct SessionViewModelTests {
     }
 
     @Test("Initial state has zero values")
+    @MainActor
     func initialState() throws {
         let (_, _, vm) = try makeTestComponents()
         #expect(vm.totalEventsToday == 0)
@@ -34,10 +36,10 @@ struct SessionViewModelTests {
     }
 
     @Test("Refresh stats counts today's events")
+    @MainActor
     func refreshStatsCountsEvents() async throws {
         let (store, _, vm) = try makeTestComponents()
 
-        // Add events
         for i in 0..<3 {
             let event = DrinkEvent(
                 timestamp: Date.now.addingTimeInterval(Double(-i) * 600),
@@ -52,10 +54,10 @@ struct SessionViewModelTests {
     }
 
     @Test("Longest gap is computed correctly")
+    @MainActor
     func longestGapComputation() async throws {
         let (store, _, vm) = try makeTestComponents()
 
-        // Event with 10-minute gap
         let event1 = DrinkEvent(
             timestamp: Date.now.addingTimeInterval(-1200),
             eventDuration: 2.0,
@@ -64,12 +66,12 @@ struct SessionViewModelTests {
         let event2 = DrinkEvent(
             timestamp: Date.now.addingTimeInterval(-600),
             eventDuration: 2.0,
-            timeSinceLastDrink: 600  // 10 minutes
+            timeSinceLastDrink: 600
         )
         let event3 = DrinkEvent(
             timestamp: .now,
             eventDuration: 2.0,
-            timeSinceLastDrink: 1800  // 30 minutes
+            timeSinceLastDrink: 1800
         )
 
         try await store.saveDrinkEvent(event1)
@@ -81,6 +83,7 @@ struct SessionViewModelTests {
     }
 
     @Test("Urgency level scales from 0 to 1")
+    @MainActor
     func urgencyLevelScaling() throws {
         let (_, _, vm) = try makeTestComponents()
 

@@ -27,6 +27,7 @@ struct VepoApp: App {
     @State private var eventLogVM: EventLogViewModel
     @State private var settingsVM: SettingsViewModel
 
+    @MainActor
     init() {
         // SwiftData setup
         do {

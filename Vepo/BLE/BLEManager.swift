@@ -4,12 +4,22 @@ import OSLog
 
 /// Manages the full BLE lifecycle: scanning, connecting, discovering services,
 /// subscribing to sensor data, and auto-reconnecting on disconnect.
-@Observable
+///
+/// Note: Cannot use @Observable because NSObject subclass is required for
+/// CoreBluetooth delegates. State changes are pushed via onStateChanged callback.
 final class BLEManager: NSObject, BLEManagerProtocol, @unchecked Sendable {
-    // MARK: - Published State
+    // MARK: - State
 
-    private(set) var connectionState: BLEConnectionState = .idle
-    private(set) var discoveredPeripherals: [CBPeripheral] = []
+    private(set) var connectionState: BLEConnectionState = .idle {
+        didSet { onStateChanged?() }
+    }
+    private(set) var discoveredPeripherals: [CBPeripheral] = [] {
+        didSet { onStateChanged?() }
+    }
+
+    /// Called whenever connectionState or discoveredPeripherals changes.
+    /// ConnectionViewModel observes via this callback.
+    var onStateChanged: (() -> Void)?
 
     // MARK: - Sensor Stream (created once, stored)
 
@@ -27,7 +37,6 @@ final class BLEManager: NSObject, BLEManagerProtocol, @unchecked Sendable {
     // MARK: - Init
 
     override init() {
-        // Create the stream once — all callers share the same stream
         var storedContinuation: AsyncStream<SensorReading>.Continuation?
         sensorReadings = AsyncStream { continuation in
             storedContinuation = continuation
@@ -52,7 +61,6 @@ final class BLEManager: NSObject, BLEManagerProtocol, @unchecked Sendable {
         )
         AppLogger.ble.info("Started scanning for Vepo bottles")
 
-        // Auto-stop scan after timeout
         try? await Task.sleep(for: .seconds(BLEConstants.scanTimeout))
         if connectionState == .scanning {
             stopScanning()

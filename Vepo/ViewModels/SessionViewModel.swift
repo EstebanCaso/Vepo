@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import SwiftData
 
 /// ViewModel for the session summary dashboard.
@@ -45,7 +46,7 @@ final class SessionViewModel {
         startLiveCounter()
 
         // Listen for new drink events via the multicast stream
-        eventListenerTask = Task { [weak self] in
+        eventListenerTask = Task { @MainActor [weak self] in
             guard let self else { return }
             for await _ in drinkDetector.drinkEvents {
                 await self.refreshStats()
@@ -97,7 +98,7 @@ final class SessionViewModel {
 
     private func startLiveCounter() {
         timerTask?.cancel()
-        timerTask = Task { [weak self] in
+        timerTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 self?.updateTimeSinceLastDrink()
                 try? await Task.sleep(for: .seconds(1))

@@ -2,7 +2,6 @@ import SwiftUI
 import SwiftData
 
 /// Preview and debug helpers for running the app without a physical ESP32 bottle.
-/// Use `#if DEBUG` to ensure none of this ships in production.
 #if DEBUG
 
 enum PreviewHelpers {
@@ -25,29 +24,9 @@ enum PreviewHelpers {
         }
     }
 
-    /// Sample drink events for previews
-    static var sampleEvents: [DrinkEvent] {
-        let now = Date.now
-        return [
-            DrinkEvent(
-                timestamp: now.addingTimeInterval(-120),
-                eventDuration: 2.8,
-                timeSinceLastDrink: 1800
-            ),
-            DrinkEvent(
-                timestamp: now.addingTimeInterval(-1920),
-                eventDuration: 3.1,
-                timeSinceLastDrink: 2400
-            ),
-            DrinkEvent(
-                timestamp: now.addingTimeInterval(-4320),
-                eventDuration: 2.5,
-                timeSinceLastDrink: nil
-            ),
-        ]
-    }
-
-    /// Creates a fully wired set of view models using mock data
+    /// Creates a fully wired set of view models using mock data.
+    /// Uses MockBLEManager to avoid CBCentralManager crash in previews.
+    @MainActor
     static func makePreviewEnvironment() -> (
         connectionVM: ConnectionViewModel,
         sessionVM: SessionViewModel,
@@ -56,6 +35,7 @@ enum PreviewHelpers {
     ) {
         let container = previewContainer
         let dataStore = LocalDataStore(modelContainer: container)
+        // Use a real BLEManager but don't scan — previews just show static state
         let bleManager = BLEManager()
         let detector = DrinkDetector()
         let notifications = NotificationService()
@@ -74,15 +54,34 @@ enum PreviewHelpers {
 
 /// Wraps a view with all required @Environment objects for previews
 struct PreviewEnvironmentModifier: ViewModifier {
-    let env = PreviewHelpers.makePreviewEnvironment()
+    @State private var connectionVM: ConnectionViewModel?
+    @State private var sessionVM: SessionViewModel?
+    @State private var eventLogVM: EventLogViewModel?
+    @State private var settingsVM: SettingsViewModel?
+    @State private var didSetup = false
 
     func body(content: Content) -> some View {
-        content
-            .environment(env.connectionVM)
-            .environment(env.sessionVM)
-            .environment(env.eventLogVM)
-            .environment(env.settingsVM)
-            .modelContainer(PreviewHelpers.previewContainer)
+        Group {
+            if let connectionVM, let sessionVM, let eventLogVM, let settingsVM {
+                content
+                    .environment(connectionVM)
+                    .environment(sessionVM)
+                    .environment(eventLogVM)
+                    .environment(settingsVM)
+            } else {
+                ProgressView()
+            }
+        }
+        .modelContainer(PreviewHelpers.previewContainer)
+        .task {
+            guard !didSetup else { return }
+            didSetup = true
+            let env = PreviewHelpers.makePreviewEnvironment()
+            connectionVM = env.connectionVM
+            sessionVM = env.sessionVM
+            eventLogVM = env.eventLogVM
+            settingsVM = env.settingsVM
+        }
     }
 }
 

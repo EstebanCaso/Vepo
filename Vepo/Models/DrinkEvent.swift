@@ -9,7 +9,6 @@ final class DrinkEvent {
     var eventDuration: TimeInterval        // Duration of the drink sequence (seconds)
     var timeSinceLastDrink: TimeInterval?  // Gap since previous event (seconds), nil if first
 
-    @Relationship(inverse: \HydrationSession.events)
     var session: HydrationSession?
 
     init(
