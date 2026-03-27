@@ -31,17 +31,17 @@ final class MockBLEManager: @unchecked Sendable {
 
     // MARK: - Stream
 
+    let sensorReadings: AsyncStream<SensorReading>
     private var sensorContinuation: AsyncStream<SensorReading>.Continuation?
     private var simulationTask: Task<Void, Never>?
     private var lastDrinkTime: Date = .now
 
-    var sensorReadings: AsyncStream<SensorReading> {
-        AsyncStream { continuation in
-            self.sensorContinuation = continuation
-            continuation.onTermination = { [weak self] _ in
-                self?.sensorContinuation = nil
-            }
+    init() {
+        var storedContinuation: AsyncStream<SensorReading>.Continuation?
+        sensorReadings = AsyncStream { continuation in
+            storedContinuation = continuation
         }
+        sensorContinuation = storedContinuation
     }
 
     // MARK: - Simulated Actions

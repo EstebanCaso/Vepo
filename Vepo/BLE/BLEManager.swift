@@ -181,10 +181,16 @@ extension BLEManager: CBCentralManagerDelegate {
 
 extension BLEManager: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        if let error {
+            AppLogger.ble.error("Service discovery error: \(error.localizedDescription)")
+            connectionState = .disconnected(reason: "Service discovery failed")
+            return
+        }
         guard let service = peripheral.services?.first(where: {
             $0.uuid == BLEConstants.serviceUUID
         }) else {
-            AppLogger.ble.error("Vepo service not found")
+            AppLogger.ble.error("Vepo service not found on device")
+            connectionState = .disconnected(reason: "Vepo service not found")
             return
         }
         peripheral.discoverCharacteristics(
@@ -198,16 +204,37 @@ extension BLEManager: CBPeripheralDelegate {
         didDiscoverCharacteristicsFor service: CBService,
         error: Error?
     ) {
+        if let error {
+            AppLogger.ble.error("Characteristic discovery error: \(error.localizedDescription)")
+            connectionState = .disconnected(reason: "Characteristic discovery failed")
+            return
+        }
         guard let characteristic = service.characteristics?.first(where: {
             $0.uuid == BLEConstants.sensorCharacteristicUUID
         }) else {
             AppLogger.ble.error("Sensor characteristic not found")
+            connectionState = .disconnected(reason: "Sensor characteristic not found")
             return
         }
         sensorCharacteristic = characteristic
         peripheral.setNotifyValue(true, for: characteristic)
-        connectionState = .connected
-        AppLogger.ble.info("Subscribed to sensor data stream")
+        AppLogger.ble.info("Subscribing to sensor data stream...")
+    }
+
+    func peripheral(
+        _ peripheral: CBPeripheral,
+        didUpdateNotificationStateFor characteristic: CBCharacteristic,
+        error: Error?
+    ) {
+        if let error {
+            AppLogger.ble.error("Notification subscription failed: \(error.localizedDescription)")
+            connectionState = .disconnected(reason: "Sensor subscription failed")
+            return
+        }
+        if characteristic.uuid == BLEConstants.sensorCharacteristicUUID, characteristic.isNotifying {
+            connectionState = .connected
+            AppLogger.ble.info("Subscribed to sensor data — connected and streaming")
+        }
     }
 
     func peripheral(

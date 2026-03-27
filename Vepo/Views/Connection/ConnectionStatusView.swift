@@ -2,7 +2,7 @@ import SwiftUI
 import CoreBluetooth
 
 /// BLE connection management screen.
-/// Shows connection state, scan/pair controls, and discovered peripherals.
+/// Shows connection state with visual indicators, scan/pair controls, and discovered peripherals.
 struct ConnectionStatusView: View {
     @Environment(ConnectionViewModel.self) private var viewModel
 
@@ -12,9 +12,11 @@ struct ConnectionStatusView: View {
                 VStack(spacing: VepoTheme.Spacing.lg) {
                     // Status indicator
                     statusSection
+                        .staggeredAppear(index: 0)
 
                     // Action button
                     actionButton
+                        .staggeredAppear(index: 1)
 
                     // Discovered peripherals
                     if !viewModel.discoveredPeripherals.isEmpty {
@@ -23,6 +25,7 @@ struct ConnectionStatusView: View {
 
                     // Help text
                     helpText
+                        .staggeredAppear(index: 2)
                 }
                 .padding(VepoTheme.Layout.screenPadding)
             }
@@ -36,15 +39,37 @@ struct ConnectionStatusView: View {
     private var statusSection: some View {
         VStack(spacing: VepoTheme.Spacing.md) {
             PulsingIndicator(state: viewModel.connectionState)
-                .frame(width: 80, height: 80)
+                .frame(width: 90, height: 90)
 
             Text(viewModel.statusMessage)
                 .font(VepoTheme.Typography.body)
                 .foregroundStyle(VepoTheme.Colors.textSecondary)
                 .multilineTextAlignment(.center)
         }
-        .vepoElevatedStyle()
         .frame(maxWidth: .infinity)
+        .padding(.vertical, VepoTheme.Spacing.lg)
+        .padding(.horizontal, VepoTheme.Layout.cardPadding)
+        .background(statusTintColor.opacity(0.05))
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: VepoTheme.Radius.xlarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: VepoTheme.Radius.xlarge)
+                .strokeBorder(statusTintColor.opacity(0.15), lineWidth: 0.5)
+        )
+        .shadow(
+            color: VepoTheme.Shadow.elevated.color,
+            radius: VepoTheme.Shadow.elevated.radius,
+            x: VepoTheme.Shadow.elevated.x,
+            y: VepoTheme.Shadow.elevated.y
+        )
+    }
+
+    private var statusTintColor: Color {
+        switch viewModel.connectionState {
+        case .connected: VepoTheme.Colors.connected
+        case .scanning, .connecting, .discoveringServices: VepoTheme.Colors.scanning
+        default: VepoTheme.Colors.disconnected
+        }
     }
 
     // MARK: - Action Button
@@ -79,8 +104,9 @@ struct ConnectionStatusView: View {
         VStack(alignment: .leading, spacing: VepoTheme.Spacing.sm) {
             VepoSectionHeader(title: "Nearby Bottles")
 
-            ForEach(viewModel.discoveredPeripherals, id: \.identifier) { peripheral in
+            ForEach(Array(viewModel.discoveredPeripherals.enumerated()), id: \.element.identifier) { index, peripheral in
                 peripheralRow(peripheral)
+                    .staggeredAppear(index: index + 3)
             }
         }
     }
@@ -89,10 +115,13 @@ struct ConnectionStatusView: View {
         Button {
             Task { await viewModel.connect(to: peripheral) }
         } label: {
-            HStack {
+            HStack(spacing: VepoTheme.Spacing.sm) {
                 Image(systemName: "waterbottle")
-                    .font(.title3)
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(VepoTheme.Colors.accent)
+                    .frame(width: 36, height: 36)
+                    .background(VepoTheme.Colors.accent.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: VepoTheme.Radius.small))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(peripheral.name ?? "Unknown Bottle")
@@ -107,10 +136,9 @@ struct ConnectionStatusView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.caption)
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(VepoTheme.Colors.textTertiary)
             }
-            .padding(VepoTheme.Spacing.sm)
             .vepoCardStyle()
         }
         .buttonStyle(VepoPressFeedback())
@@ -120,12 +148,10 @@ struct ConnectionStatusView: View {
     // MARK: - Help Text
 
     private var helpText: some View {
-        VStack(spacing: VepoTheme.Spacing.xs) {
-            Text("Make sure your Vepo bottle is turned on and nearby.")
-                .font(VepoTheme.Typography.footnote)
-                .foregroundStyle(VepoTheme.Colors.textTertiary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(.top, VepoTheme.Spacing.md)
+        Text("Make sure your Vepo bottle is turned on and nearby.")
+            .font(VepoTheme.Typography.footnote)
+            .foregroundStyle(VepoTheme.Colors.textTertiary)
+            .multilineTextAlignment(.center)
+            .padding(.top, VepoTheme.Spacing.md)
     }
 }

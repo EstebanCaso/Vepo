@@ -8,16 +8,9 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // Reminder section
                 reminderSection
-
-                // Notification type
                 notificationTypeSection
-
-                // Quiet hours
                 quietHoursSection
-
-                // About
                 aboutSection
             }
             .listStyle(.insetGrouped)
@@ -40,7 +33,7 @@ struct SettingsView: View {
                         .font(VepoTheme.Typography.body)
                     Spacer()
                     Text("\(viewModel.reminderMinutes) min")
-                        .font(VepoTheme.Typography.headline)
+                        .font(VepoTheme.Typography.title3)
                         .foregroundStyle(VepoTheme.Colors.accent)
                 }
 
@@ -71,7 +64,7 @@ struct SettingsView: View {
             }
             .tint(VepoTheme.Colors.accent)
         } header: {
-            Text("Reminders")
+            sectionHeader("Reminders")
         } footer: {
             Text("How long to wait after your last drink before sending a reminder.")
                 .font(VepoTheme.Typography.footnote)
@@ -81,22 +74,37 @@ struct SettingsView: View {
     // MARK: - Notification Type
 
     private var notificationTypeSection: some View {
-        Section("Notification Style") {
+        Section {
             ForEach(NotificationType.allCases, id: \.self) { type in
                 Button {
-                    viewModel.notificationType = type
+                    withAnimation(VepoTheme.Motion.standard) {
+                        viewModel.notificationType = type
+                    }
                     Task { await viewModel.save() }
                 } label: {
-                    HStack {
+                    HStack(spacing: VepoTheme.Spacing.sm) {
+                        // Radio indicator
+                        ZStack {
+                            Circle()
+                                .strokeBorder(
+                                    viewModel.notificationType == type
+                                        ? VepoTheme.Colors.accent
+                                        : VepoTheme.Colors.disabled,
+                                    lineWidth: 2
+                                )
+                                .frame(width: 22, height: 22)
+
+                            if viewModel.notificationType == type {
+                                Circle()
+                                    .fill(VepoTheme.Colors.accent)
+                                    .frame(width: 12, height: 12)
+                            }
+                        }
+
                         Label(type.displayName, systemImage: type.icon)
                             .foregroundStyle(VepoTheme.Colors.textPrimary)
 
                         Spacer()
-
-                        if viewModel.notificationType == type {
-                            Image(systemName: "checkmark")
-                                .foregroundStyle(VepoTheme.Colors.accent)
-                        }
                     }
                 }
                 .accessibilityLabel(type.displayName)
@@ -104,6 +112,8 @@ struct SettingsView: View {
                     viewModel.notificationType == type ? .isSelected : []
                 )
             }
+        } header: {
+            sectionHeader("Notification Style")
         }
     }
 
@@ -126,6 +136,7 @@ struct SettingsView: View {
                     }
                 }
                 .labelsHidden()
+                .tint(VepoTheme.Colors.accent)
             }
 
             HStack {
@@ -143,9 +154,10 @@ struct SettingsView: View {
                     }
                 }
                 .labelsHidden()
+                .tint(VepoTheme.Colors.accent)
             }
         } header: {
-            Text("Active Hours")
+            sectionHeader("Active Hours")
         } footer: {
             Text("Reminders will only be sent during these hours.")
                 .font(VepoTheme.Typography.footnote)
@@ -155,20 +167,39 @@ struct SettingsView: View {
     // MARK: - About
 
     private var aboutSection: some View {
-        Section("About") {
+        Section {
             LabeledContent("Version", value: "1.0.0")
             LabeledContent("Notifications") {
-                Text(viewModel.hasNotificationPermission ? "Enabled" : "Disabled")
-                    .foregroundStyle(
-                        viewModel.hasNotificationPermission
-                            ? VepoTheme.Colors.success
-                            : VepoTheme.Colors.alert
-                    )
+                HStack(spacing: VepoTheme.Spacing.xxs) {
+                    Circle()
+                        .fill(
+                            viewModel.hasNotificationPermission
+                                ? VepoTheme.Colors.success
+                                : VepoTheme.Colors.alert
+                        )
+                        .frame(width: 8, height: 8)
+                    Text(viewModel.hasNotificationPermission ? "Enabled" : "Disabled")
+                        .foregroundStyle(
+                            viewModel.hasNotificationPermission
+                                ? VepoTheme.Colors.success
+                                : VepoTheme.Colors.alert
+                        )
+                }
             }
+        } header: {
+            sectionHeader("About")
         }
     }
 
     // MARK: - Helpers
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(.caption, design: .rounded, weight: .semibold))
+            .foregroundStyle(VepoTheme.Colors.accent)
+            .textCase(.uppercase)
+            .tracking(0.8)
+    }
 
     private func formatHour(_ hour: Int) -> String {
         let date = Calendar.current.date(

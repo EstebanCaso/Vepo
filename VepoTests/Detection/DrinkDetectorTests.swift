@@ -33,8 +33,10 @@ struct DrinkDetectorTests {
         ))
 
         // Phase 2: Tilt (sustained angle > 45°, gyro indicates rotation)
+        // Complementary filter (α=0.98) needs ~47 readings at gyroX=30°/s
+        // to converge past the 45° tilt threshold. 50 readings gives margin.
         let tiltComponent = 9.81 / 2.0.squareRoot()
-        for i in 1...30 {  // ~0.6 seconds at 50Hz
+        for i in 1...50 {  // ~1.0 seconds at 50Hz
             detector.process(makeReading(
                 accX: tiltComponent, accY: 0, accZ: tiltComponent,
                 gyroX: 30, gyroY: 0, gyroZ: 0,

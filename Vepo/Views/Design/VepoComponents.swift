@@ -54,7 +54,7 @@ struct VepoButton: View {
             .frame(minHeight: VepoTheme.Layout.minTouchTarget)
             .padding(.horizontal, VepoTheme.Spacing.lg)
             .foregroundStyle(foregroundColor)
-            .background(backgroundColor)
+            .background(backgroundContent)
             .clipShape(RoundedRectangle(cornerRadius: VepoTheme.Radius.medium))
             .overlay {
                 if style == .secondary {
@@ -75,11 +75,13 @@ struct VepoButton: View {
         }
     }
 
-    private var backgroundColor: Color {
+    @ViewBuilder
+    private var backgroundContent: some View {
         switch style {
-        case .primary: VepoTheme.Colors.accent
-        case .secondary: .clear
-        case .ghost: .clear
+        case .primary:
+            VepoTheme.Gradients.accent
+        case .secondary, .ghost:
+            Color.clear
         }
     }
 }
@@ -91,7 +93,7 @@ struct VepoPressFeedback: SwiftUI.ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(
                 reduceMotion ? .none : VepoTheme.Motion.quick,
@@ -162,5 +164,36 @@ struct VepoEmptyState: View {
                 .multilineTextAlignment(.center)
         }
         .padding(VepoTheme.Spacing.xl)
+    }
+}
+
+// MARK: - Staggered Appear Modifier
+
+/// Animates a view in with offset + opacity, staggered by index.
+/// Respects reduce-motion accessibility setting.
+struct StaggeredAppear: ViewModifier {
+    let index: Int
+    @State private var appeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .offset(y: (appeared || reduceMotion) ? 0 : 20)
+            .opacity((appeared || reduceMotion) ? 1 : 0)
+            .onAppear {
+                guard !reduceMotion else {
+                    appeared = true
+                    return
+                }
+                withAnimation(VepoTheme.Motion.staggered(index: index)) {
+                    appeared = true
+                }
+            }
+    }
+}
+
+extension View {
+    func staggeredAppear(index: Int) -> some View {
+        modifier(StaggeredAppear(index: index))
     }
 }

@@ -1,8 +1,8 @@
 import SwiftUI
 
 // MARK: - Vepo Design System
-// Calming, accessibility-first design for autistic users.
-// Muted teal/blue palette, SF Rounded headings, minimal cognitive load.
+// Premium, calming, accessibility-first design for autistic users.
+// Glassmorphic cards, gradient accents, SF Rounded headings, low cognitive load.
 
 enum VepoTheme {
 
@@ -17,6 +17,11 @@ enum VepoTheme {
         // Brand accent
         static let accent = Color(hex: 0x5BA4B5)            // Calm teal — primary interactive
         static let accentSoft = Color(hex: 0x5BA4B5).opacity(0.15) // Tinted backgrounds
+        static let accentDeep = Color(hex: 0x4A7FB5)        // Deeper blue — gradient endpoint
+
+        // Glass effect colors
+        static let glassBorder = Color.white.opacity(0.25)   // Frosted glass edge highlight
+        static let glassFill = Color.white.opacity(0.55)     // Glass card fill
 
         // Text hierarchy
         static let textPrimary = Color(hex: 0x2D3748)       // Warm dark grey — high readability
@@ -36,6 +41,41 @@ enum VepoTheme {
         static let connected = Color(hex: 0x68D391)          // Green — connected
         static let scanning = Color(hex: 0x5BA4B5)           // Teal — scanning
         static let disconnected = Color(hex: 0xA0AEC0)       // Grey — disconnected
+    }
+
+    // MARK: - Gradients
+
+    enum Gradients {
+        /// Primary brand gradient: teal → deeper blue
+        static let accent = LinearGradient(
+            colors: [Colors.accent, Colors.accentDeep],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+
+        /// Angular gradient for progress ring — urgency-aware
+        static func ring(urgencyColor: Color) -> AngularGradient {
+            AngularGradient(
+                gradient: Gradient(colors: [
+                    urgencyColor.opacity(0.3),
+                    urgencyColor.opacity(0.6),
+                    urgencyColor
+                ]),
+                center: .center,
+                startAngle: .degrees(-90),
+                endAngle: .degrees(270)
+            )
+        }
+
+        /// Subtle radial glow behind hero elements
+        static func glow(color: Color) -> RadialGradient {
+            RadialGradient(
+                colors: [color.opacity(0.08), color.opacity(0)],
+                center: .center,
+                startRadius: 40,
+                endRadius: 200
+            )
+        }
     }
 
     // MARK: - Typography
@@ -58,6 +98,9 @@ enum VepoTheme {
         // Monospaced for the live counter (tabular figures prevent layout shift)
         static let counter = Font.system(.largeTitle, design: .monospaced, weight: .light)
         static let counterSmall = Font.system(.title, design: .monospaced, weight: .light)
+
+        // Hero counter — large, ultraLight for premium feel
+        static let counterHero = Font.system(size: 52, weight: .ultraLight, design: .monospaced)
     }
 
     // MARK: - Spacing (8pt Grid System)
@@ -78,6 +121,7 @@ enum VepoTheme {
         static let small: CGFloat = 8
         static let medium: CGFloat = 12
         static let large: CGFloat = 16
+        static let xlarge: CGFloat = 24
         static let pill: CGFloat = 100
     }
 
@@ -96,6 +140,11 @@ enum VepoTheme {
             x: 0,
             y: 4
         )
+
+        /// Colored glow shadow for hero elements (progress ring, connected indicator)
+        static func glow(color: Color) -> ShadowStyle {
+            ShadowStyle(color: color.opacity(0.25), radius: 20, x: 0, y: 0)
+        }
     }
 
     // MARK: - Animation
@@ -105,6 +154,15 @@ enum VepoTheme {
         static let standard: Animation = .easeOut(duration: 0.25)
         static let gentle: Animation = .easeInOut(duration: 0.4)
         static let spring: Animation = .spring(response: 0.35, dampingFraction: 0.7)
+
+        /// Staggered spring for sequential card/element entry
+        static func staggered(index: Int) -> Animation {
+            .spring(response: 0.45, dampingFraction: 0.8)
+            .delay(Double(index) * 0.08)
+        }
+
+        /// Slow breathe cycle for connected indicator
+        static let breathe: Animation = .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
     }
 
     // MARK: - Layout
@@ -113,6 +171,8 @@ enum VepoTheme {
         static let minTouchTarget: CGFloat = 44  // Apple HIG minimum
         static let cardPadding: CGFloat = Spacing.md
         static let screenPadding: CGFloat = Spacing.md
+        static let heroRingSize: CGFloat = 260
+        static let heroRingStroke: CGFloat = 8
     }
 }
 
@@ -142,11 +202,16 @@ extension Color {
 // MARK: - View Modifiers
 
 extension View {
+    /// Glassmorphic card — frosted material with thin border highlight
     func vepoCardStyle() -> some View {
         self
             .padding(VepoTheme.Layout.cardPadding)
-            .background(VepoTheme.Colors.surface)
+            .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: VepoTheme.Radius.large))
+            .overlay(
+                RoundedRectangle(cornerRadius: VepoTheme.Radius.large)
+                    .strokeBorder(VepoTheme.Colors.glassBorder, lineWidth: 0.5)
+            )
             .shadow(
                 color: VepoTheme.Shadow.card.color,
                 radius: VepoTheme.Shadow.card.radius,
@@ -155,16 +220,40 @@ extension View {
             )
     }
 
+    /// Elevated glassmorphic card — stronger shadow, used for hero sections
     func vepoElevatedStyle() -> some View {
         self
             .padding(VepoTheme.Layout.cardPadding)
-            .background(VepoTheme.Colors.surface)
-            .clipShape(RoundedRectangle(cornerRadius: VepoTheme.Radius.large))
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: VepoTheme.Radius.xlarge))
+            .overlay(
+                RoundedRectangle(cornerRadius: VepoTheme.Radius.xlarge)
+                    .strokeBorder(VepoTheme.Colors.glassBorder, lineWidth: 0.5)
+            )
             .shadow(
                 color: VepoTheme.Shadow.elevated.color,
                 radius: VepoTheme.Shadow.elevated.radius,
                 x: VepoTheme.Shadow.elevated.x,
                 y: VepoTheme.Shadow.elevated.y
+            )
+    }
+
+    /// Tinted glass card — semantic color at low opacity with glass border
+    func vepoTintedCardStyle(tint: Color) -> some View {
+        self
+            .padding(VepoTheme.Layout.cardPadding)
+            .background(tint.opacity(0.08))
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: VepoTheme.Radius.large))
+            .overlay(
+                RoundedRectangle(cornerRadius: VepoTheme.Radius.large)
+                    .strokeBorder(tint.opacity(0.15), lineWidth: 0.5)
+            )
+            .shadow(
+                color: VepoTheme.Shadow.card.color,
+                radius: VepoTheme.Shadow.card.radius,
+                x: VepoTheme.Shadow.card.x,
+                y: VepoTheme.Shadow.card.y
             )
     }
 

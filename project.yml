@@ -1,0 +1,68 @@
+name: Vepo
+options:
+  bundleIdPrefix: com.vepo
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.4"
+
+schemes:
+  Vepo:
+    build:
+      targets:
+        Vepo: all
+        VepoTests: [test]
+    test:
+      targets:
+        - VepoTests
+
+settings:
+  base:
+    SWIFT_VERSION: "5"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+
+targets:
+  Vepo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Vepo
+        excludes:
+          - "*.entitlements"
+    info:
+      path: Vepo/Info.plist
+      properties:
+        CFBundleDisplayName: Vepo
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        LSRequiresIPhoneOS: true
+        MinimumOSVersion: "17.0"
+        UILaunchScreen:
+          UIColorName: ""
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSBluetoothAlwaysUsageDescription: "Vepo connects to your smart water bottle via Bluetooth to automatically detect when you drink and remind you to stay hydrated."
+        NSBluetoothPeripheralUsageDescription: "Vepo needs Bluetooth access to communicate with your smart water bottle."
+        UIBackgroundModes:
+          - bluetooth-central
+          - processing
+    entitlements:
+      path: Vepo/Vepo.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vepo.Vepo
+        INFOPLIST_FILE: Vepo/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Vepo/Vepo.entitlements
+        SWIFT_STRICT_CONCURRENCY: minimal
+
+  VepoTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: VepoTests
+    dependencies:
+      - target: Vepo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vepo.VepoTests
+        SWIFT_STRICT_CONCURRENCY: minimal
+        GENERATE_INFOPLIST_FILE: YES

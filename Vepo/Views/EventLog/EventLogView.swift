@@ -32,6 +32,7 @@ struct EventLogView: View {
                         displayedComponents: .date
                     )
                     .labelsHidden()
+                    .tint(VepoTheme.Colors.accent)
                 }
             }
             .task {
@@ -45,11 +46,17 @@ struct EventLogView: View {
 
     private var eventList: some View {
         List {
-            ForEach(viewModel.groupedByHour, id: \.hour) { group in
-                Section(group.hour) {
+            ForEach(Array(viewModel.groupedByHour.enumerated()), id: \.element.hour) { sectionIndex, group in
+                Section {
                     ForEach(group.events, id: \.id) { event in
                         EventRow(event: event)
                     }
+                } header: {
+                    Text(group.hour)
+                        .font(VepoTheme.Typography.caption)
+                        .foregroundStyle(VepoTheme.Colors.accent)
+                        .textCase(.uppercase)
+                        .tracking(0.5)
                 }
             }
         }
