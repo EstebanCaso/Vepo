@@ -13,6 +13,7 @@ struct VepoApp: App {
 
     // MARK: - Services
 
+    private let dataStore: LocalDataStore
     private let bleManager: BLEManager
     private let mockBLEManager: MockBLEManager?
     private let drinkDetector: DrinkDetector
@@ -46,7 +47,8 @@ struct VepoApp: App {
             fatalError("Failed to create ModelContainer: \(error.localizedDescription)")
         }
 
-        let dataStore = LocalDataStore(modelContainer: modelContainer)
+        let store = LocalDataStore(modelContainer: modelContainer)
+        self.dataStore = store
 
         // Initialize services
         let ble = BLEManager()
@@ -67,29 +69,17 @@ struct VepoApp: App {
             hapticService: haptics
         ))
         self._sessionVM = State(initialValue: SessionViewModel(
-            dataStore: dataStore,
+            dataStore: store,
             drinkDetector: detector
         ))
         self._eventLogVM = State(initialValue: EventLogViewModel(
-            dataStore: dataStore
+            dataStore: store
         ))
         self._settingsVM = State(initialValue: SettingsViewModel(
-            dataStore: dataStore,
+            dataStore: store,
             notificationService: notifications
         ))
 
-        // Wire drink detection pipeline
-        detector.onDrinkDetected = { event in
-            Task {
-                try? await dataStore.saveDrinkEvent(event)
-
-                let settings = try? await dataStore.loadSettings()
-                let minutes = settings?.reminderWaitMinutes ?? 60
-                await notifications.resetTimer(afterMinutes: minutes)
-
-                haptics.playDrinkConfirmation()
-            }
-        }
     }
 
     var body: some Scene {
@@ -100,14 +90,25 @@ struct VepoApp: App {
                 .environment(eventLogVM)
                 .environment(settingsVM)
                 .task {
+                    // Start BLE → DrinkDetector pipeline
                     if let mock = mockBLEManager {
-                        // Mock mode: auto-connect and feed simulated data
                         AppLogger.ble.info("Running in MOCK BLE mode")
                         await mock.simulateConnect()
                         await drinkDetector.startProcessing(mock.sensorReadings)
                     } else {
-                        // Real mode: wait for BLE connection
                         await drinkDetector.startProcessing(bleManager.sensorReadings)
+                    }
+                }
+                .task {
+                    // Persist events, reschedule notifications, haptic feedback
+                    for await event in drinkDetector.drinkEvents {
+                        try? await dataStore.saveDrinkEvent(event)
+
+                        let settings = try? await dataStore.loadSettings()
+                        let minutes = settings?.reminderWaitMinutes ?? 60
+                        await notificationService.resetTimer(afterMinutes: minutes)
+
+                        hapticService.playDrinkConfirmation()
                     }
                 }
                 .task {

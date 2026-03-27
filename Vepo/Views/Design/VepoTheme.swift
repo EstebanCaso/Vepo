@@ -169,7 +169,7 @@ extension View {
     }
 
     /// Conditionally applies animation only when reduce motion is off
-    func vepoAnimation(_ animation: Animation, reduceMotion: Bool) -> some View {
-        self.animation(reduceMotion ? .none : animation, value: UUID())
+    func vepoAnimation<V: Equatable>(_ animation: Animation, reduceMotion: Bool, value: V) -> some View {
+        self.animation(reduceMotion ? .none : animation, value: value)
     }
 }

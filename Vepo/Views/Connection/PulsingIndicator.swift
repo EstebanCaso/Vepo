@@ -33,10 +33,10 @@ struct PulsingIndicator: View {
                 .foregroundStyle(.white)
         }
         .onAppear {
-            isPulsing = state == .scanning
+            withAnimation { isPulsing = state == .scanning }
         }
         .onChange(of: state) { _, newState in
-            isPulsing = newState == .scanning
+            withAnimation { isPulsing = newState == .scanning }
         }
         .accessibilityLabel("Connection status: \(state.displayName)")
     }

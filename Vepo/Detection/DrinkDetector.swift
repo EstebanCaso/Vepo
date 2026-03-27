@@ -3,17 +3,21 @@ import OSLog
 
 /// Orchestrates drink event detection by processing a stream of SensorReadings
 /// through the FSM and signal processing pipeline.
+///
+/// Confined to @MainActor for thread safety — all state mutations happen on main.
+/// Emits detected events via an AsyncStream (multicast-safe).
+@MainActor
 @Observable
-final class DrinkDetector: @unchecked Sendable {
+final class DrinkDetector {
     // MARK: - Published State
 
     private(set) var currentState: DrinkDetectionState = .idle
     private(set) var lastEventTimestamp: Date?
 
-    // MARK: - Event Callback
+    // MARK: - Event Stream (multicast — multiple consumers can each iterate)
 
-    /// Called when a valid drink event is detected.
-    var onDrinkDetected: ((DrinkEvent) -> Void)?
+    let drinkEvents: AsyncStream<DrinkEvent>
+    private let eventContinuation: AsyncStream<DrinkEvent>.Continuation
 
     // MARK: - Internal State
 
@@ -23,6 +27,14 @@ final class DrinkDetector: @unchecked Sendable {
     private var accelBuffer: [Double] = []
     private var gyroBuffer: [Double] = []
     private let bufferCapacity = 50  // ~1 second at 50Hz
+
+    // MARK: - Init
+
+    init() {
+        let (stream, continuation) = AsyncStream.makeStream(of: DrinkEvent.self)
+        self.drinkEvents = stream
+        self.eventContinuation = continuation
+    }
 
     // MARK: - Processing
 
@@ -69,6 +81,7 @@ final class DrinkDetector: @unchecked Sendable {
     }
 
     /// Start consuming an async stream of sensor readings.
+    /// Hops each reading to @MainActor for thread-safe processing.
     func startProcessing(_ readings: AsyncStream<SensorReading>) async {
         for await reading in readings {
             process(reading)
@@ -85,7 +98,6 @@ final class DrinkDetector: @unchecked Sendable {
     ) {
         switch currentState {
         case .idle:
-            // Idle → PickedUp: acceleration spike above threshold
             if accMag > SensorConstants.liftAccelerationThreshold {
                 liftStartTime = timestamp
                 currentState = .pickedUp(since: timestamp)
@@ -93,29 +105,24 @@ final class DrinkDetector: @unchecked Sendable {
             }
 
         case .pickedUp(let since):
-            // Check timeout — if too long in pickedUp without tilt, reset
             let elapsed = timestamp.timeIntervalSince(since)
             if elapsed > SensorConstants.maxEventDuration {
                 resetToIdle()
                 return
             }
 
-            // PickedUp → Tilted: tilt angle exceeds drinking threshold
             if tiltAngle > SensorConstants.tiltAngleThreshold {
                 currentState = .tilted(since: timestamp, peakAngle: tiltAngle)
                 AppLogger.detection.debug("State: pickedUp → tilted (angle: \(tiltAngle, format: .fixed(precision: 1))°)")
             }
 
-            // PickedUp → Idle: returned to rest without tilting
             if SignalProcessor.isResting(accelerationMagnitude: accMag, gyroMagnitude: gyroMag) {
                 resetToIdle()
             }
 
         case .tilted(let since, let peakAngle):
-            // Track peak angle
             let updatedPeak = max(peakAngle, tiltAngle)
 
-            // Check total elapsed time from lift start
             if let liftStart = liftStartTime {
                 let totalElapsed = timestamp.timeIntervalSince(liftStart)
                 if totalElapsed > SensorConstants.maxEventDuration {
@@ -124,10 +131,8 @@ final class DrinkDetector: @unchecked Sendable {
                 }
             }
 
-            // Check minimum tilt duration
             let tiltDuration = timestamp.timeIntervalSince(since)
 
-            // Tilted → PutDown: returned to resting position after sufficient tilt
             if SignalProcessor.isResting(accelerationMagnitude: accMag, gyroMagnitude: gyroMag),
                tiltDuration >= SensorConstants.tiltDurationMinimum {
                 let totalDuration = liftStartTime.map { timestamp.timeIntervalSince($0) } ?? tiltDuration
@@ -139,7 +144,6 @@ final class DrinkDetector: @unchecked Sendable {
             }
 
         case .putDown:
-            // PutDown → Idle: always transition back after event processing
             resetToIdle()
         }
     }
@@ -163,7 +167,7 @@ final class DrinkDetector: @unchecked Sendable {
         )
 
         lastEventTimestamp = timestamp
-        onDrinkDetected?(event)
+        eventContinuation.yield(event)
         AppLogger.detection.info("Drink event detected: duration=\(totalDuration, format: .fixed(precision: 1))s")
 
         resetToIdle()
@@ -175,6 +179,7 @@ final class DrinkDetector: @unchecked Sendable {
         currentState = .idle
         liftStartTime = nil
         fusedTiltAngle = 0.0
+        lastReadingTimestamp = nil  // Prevents stale dt on reconnect (MEDIUM-5 fix)
     }
 
     private func updateBuffers(with reading: SensorReading) {

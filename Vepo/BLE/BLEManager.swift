@@ -11,16 +11,9 @@ final class BLEManager: NSObject, BLEManagerProtocol, @unchecked Sendable {
     private(set) var connectionState: BLEConnectionState = .idle
     private(set) var discoveredPeripherals: [CBPeripheral] = []
 
-    // MARK: - Sensor Stream
+    // MARK: - Sensor Stream (created once, stored)
 
-    var sensorReadings: AsyncStream<SensorReading> {
-        AsyncStream { continuation in
-            self.sensorContinuation = continuation
-            continuation.onTermination = { [weak self] _ in
-                self?.sensorContinuation = nil
-            }
-        }
-    }
+    let sensorReadings: AsyncStream<SensorReading>
 
     // MARK: - Private
 
@@ -34,7 +27,13 @@ final class BLEManager: NSObject, BLEManagerProtocol, @unchecked Sendable {
     // MARK: - Init
 
     override init() {
+        // Create the stream once — all callers share the same stream
+        var storedContinuation: AsyncStream<SensorReading>.Continuation?
+        sensorReadings = AsyncStream { continuation in
+            storedContinuation = continuation
+        }
         super.init()
+        sensorContinuation = storedContinuation
         centralManager = CBCentralManager(delegate: self, queue: .main)
     }
 
@@ -105,9 +104,9 @@ final class BLEManager: NSObject, BLEManagerProtocol, @unchecked Sendable {
         let delay = BLEConstants.reconnectBaseDelay * pow(2.0, Double(reconnectAttempts - 1))
         AppLogger.ble.info("Reconnect attempt \(self.reconnectAttempts) in \(delay)s")
 
-        Task {
+        Task { [weak self] in
             try? await Task.sleep(for: .seconds(delay))
-            centralManager.connect(peripheral, options: nil)
+            self?.centralManager.connect(peripheral, options: nil)
         }
     }
 }

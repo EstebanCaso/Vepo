@@ -22,13 +22,11 @@ final class EventLogViewModel {
         return grouped
             .sorted { $0.key > $1.key }
             .map { hour, events in
-                let formatter = DateFormatter()
-                formatter.dateFormat = "h a"
                 let date = calendar.date(
                     bySettingHour: hour, minute: 0, second: 0,
                     of: selectedDate
                 ) ?? selectedDate
-                return (hour: formatter.string(from: date), events: events)
+                return (hour: Date.hourFormatter.string(from: date), events: events)
             }
     }
 

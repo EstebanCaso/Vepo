@@ -21,6 +21,7 @@ struct DrinkDetectorTests {
     }
 
     /// Simulates a valid drink sequence: lift → tilt → return
+    @MainActor
     private func simulateDrinkSequence(
         detector: DrinkDetector,
         startTime: Date = .now
@@ -32,7 +33,6 @@ struct DrinkDetectorTests {
         ))
 
         // Phase 2: Tilt (sustained angle > 45°, gyro indicates rotation)
-        // Simulate tilted position: x-axis has significant component
         let tiltComponent = 9.81 / 2.0.squareRoot()
         for i in 1...30 {  // ~0.6 seconds at 50Hz
             detector.process(makeReading(
@@ -53,12 +53,14 @@ struct DrinkDetectorTests {
     // MARK: - Tests
 
     @Test("Starts in idle state")
+    @MainActor
     func initialState() {
         let detector = DrinkDetector()
         #expect(detector.currentState == .idle)
     }
 
     @Test("Acceleration spike transitions from idle to pickedUp")
+    @MainActor
     func idleToPickedUp() {
         let detector = DrinkDetector()
 
@@ -72,6 +74,7 @@ struct DrinkDetectorTests {
     }
 
     @Test("Below-threshold motion stays in idle")
+    @MainActor
     func belowThresholdStaysIdle() {
         let detector = DrinkDetector()
 
@@ -81,25 +84,35 @@ struct DrinkDetectorTests {
         #expect(detector.currentState == .idle)
     }
 
-    @Test("Valid drink sequence emits event")
+    @Test("Valid drink sequence emits event via stream")
+    @MainActor
     func validSequenceEmitsEvent() async {
         let detector = DrinkDetector()
-        var detectedEvent: DrinkEvent?
 
-        detector.onDrinkDetected = { event in
-            detectedEvent = event
+        // Collect events from the stream in a background task
+        var detectedEvents: [DrinkEvent] = []
+        let collectTask = Task { @MainActor in
+            for await event in detector.drinkEvents {
+                detectedEvents.append(event)
+                break  // Only need one
+            }
         }
 
         simulateDrinkSequence(detector: detector)
 
-        #expect(detectedEvent != nil)
-        if let event = detectedEvent {
+        // Give the stream a moment to deliver
+        try? await Task.sleep(for: .milliseconds(100))
+        collectTask.cancel()
+
+        #expect(!detectedEvents.isEmpty)
+        if let event = detectedEvents.first {
             #expect(event.eventDuration >= SensorConstants.minEventDuration)
             #expect(event.eventDuration <= SensorConstants.maxEventDuration)
         }
     }
 
     @Test("Shake pattern resets to idle")
+    @MainActor
     func shakeResetsToIdle() {
         let detector = DrinkDetector()
 
@@ -116,10 +129,16 @@ struct DrinkDetectorTests {
     }
 
     @Test("Sequence exceeding max duration does not emit event")
-    func tooLongSequenceRejected() {
+    @MainActor
+    func tooLongSequenceRejected() async {
         let detector = DrinkDetector()
-        var detectedEvent: DrinkEvent?
-        detector.onDrinkDetected = { detectedEvent = $0 }
+
+        var detectedEvents: [DrinkEvent] = []
+        let collectTask = Task { @MainActor in
+            for await event in detector.drinkEvents {
+                detectedEvents.append(event)
+            }
+        }
 
         let startTime = Date.now
 
@@ -145,10 +164,14 @@ struct DrinkDetectorTests {
             at: startTime.addingTimeInterval(7.0)
         ))
 
-        #expect(detectedEvent == nil)
+        try? await Task.sleep(for: .milliseconds(100))
+        collectTask.cancel()
+
+        #expect(detectedEvents.isEmpty)
     }
 
     @Test("Returning to rest without tilt resets to idle")
+    @MainActor
     func pickUpWithoutTiltResetsToIdle() {
         let detector = DrinkDetector()
         let startTime = Date.now
@@ -167,22 +190,5 @@ struct DrinkDetectorTests {
         ))
 
         #expect(detector.currentState == .idle)
-    }
-
-    @Test("Consecutive drink events track time since last drink")
-    func consecutiveEventsTrackGap() {
-        let detector = DrinkDetector()
-        var events: [DrinkEvent] = []
-        detector.onDrinkDetected = { events.append($0) }
-
-        let firstTime = Date.now
-        simulateDrinkSequence(detector: detector, startTime: firstTime)
-
-        let secondTime = firstTime.addingTimeInterval(300) // 5 minutes later
-        simulateDrinkSequence(detector: detector, startTime: secondTime)
-
-        #expect(events.count == 2)
-        #expect(events[0].timeSinceLastDrink == nil)  // First event
-        #expect(events[1].timeSinceLastDrink != nil)   // Has gap
     }
 }

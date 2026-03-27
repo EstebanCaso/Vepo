@@ -171,11 +171,9 @@ struct SettingsView: View {
     // MARK: - Helpers
 
     private func formatHour(_ hour: Int) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h a"
         let date = Calendar.current.date(
             bySettingHour: hour, minute: 0, second: 0, of: .now
         ) ?? .now
-        return formatter.string(from: date)
+        return Date.hourFormatter.string(from: date)
     }
 }

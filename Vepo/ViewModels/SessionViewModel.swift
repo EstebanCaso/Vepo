@@ -3,11 +3,13 @@ import SwiftData
 
 /// ViewModel for the session summary dashboard.
 /// Tracks live stats and the ticking time-since-last-drink counter.
+@MainActor
 @Observable
 final class SessionViewModel {
     private let dataStore: LocalDataStore
     private let drinkDetector: DrinkDetector
     private var timerTask: Task<Void, Never>?
+    private var eventListenerTask: Task<Void, Never>?
 
     // MARK: - Live State
 
@@ -16,10 +18,12 @@ final class SessionViewModel {
     var averageInterval: TimeInterval = 0
     var timeSinceLastDrink: TimeInterval = 0
     var lastDrinkTime: Date?
+    var reminderThresholdMinutes: Int = 60
 
     /// Color intensity based on time since last drink (0.0 = just drank, 1.0 = overdue)
     var urgencyLevel: Double {
-        let thresholdSeconds: Double = 60 * 60  // 60 minutes
+        let thresholdSeconds = Double(reminderThresholdMinutes) * 60
+        guard thresholdSeconds > 0 else { return 0.0 }
         return min(timeSinceLastDrink / thresholdSeconds, 1.0)
     }
 
@@ -33,12 +37,18 @@ final class SessionViewModel {
     // MARK: - Lifecycle
 
     func start() async {
+        // Guard against re-entry
+        guard timerTask == nil else { return }
+
         await refreshStats()
+        await loadThreshold()
         startLiveCounter()
 
-        drinkDetector.onDrinkDetected = { [weak self] _ in
-            Task { @MainActor [weak self] in
-                await self?.refreshStats()
+        // Listen for new drink events via the multicast stream
+        eventListenerTask = Task { [weak self] in
+            guard let self else { return }
+            for await _ in drinkDetector.drinkEvents {
+                await self.refreshStats()
             }
         }
     }
@@ -46,6 +56,8 @@ final class SessionViewModel {
     func stop() {
         timerTask?.cancel()
         timerTask = nil
+        eventListenerTask?.cancel()
+        eventListenerTask = nil
     }
 
     // MARK: - Stats
@@ -72,11 +84,20 @@ final class SessionViewModel {
         }
     }
 
+    private func loadThreshold() async {
+        do {
+            let settings = try await dataStore.loadSettings()
+            reminderThresholdMinutes = settings.reminderWaitMinutes
+        } catch {
+            AppLogger.persistence.error("Failed to load threshold: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: - Live Counter
 
     private func startLiveCounter() {
         timerTask?.cancel()
-        timerTask = Task { @MainActor [weak self] in
+        timerTask = Task { [weak self] in
             while !Task.isCancelled {
                 self?.updateTimeSinceLastDrink()
                 try? await Task.sleep(for: .seconds(1))

@@ -7,12 +7,13 @@ extension TimeInterval {
         let totalSeconds = Int(self)
         let hours = totalSeconds / 3600
         let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
 
         if totalSeconds < 60 {
             return "Just now"
         } else if hours == 0 {
             return "\(minutes) min ago"
+        } else if minutes == 0 {
+            return "\(hours)h ago"
         } else {
             return "\(hours)h \(minutes)m ago"
         }
@@ -47,12 +48,30 @@ extension TimeInterval {
 }
 
 extension Date {
+    // MARK: - Cached Formatters (allocated once, reused)
+
+    private static let shortTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        f.dateStyle = .none
+        return f
+    }()
+
+    private static let sectionHeaderFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
+
+    static let hourFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h a"
+        return f
+    }()
+
     /// Short time string: "2:34 PM"
     var shortTimeString: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
-        return formatter.string(from: self)
+        Date.shortTimeFormatter.string(from: self)
     }
 
     /// Section header format: "Today", "Yesterday", or "Mar 25"
@@ -62,9 +81,7 @@ extension Date {
         } else if Calendar.current.isDateInYesterday(self) {
             return "Yesterday"
         } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d"
-            return formatter.string(from: self)
+            return Date.sectionHeaderFormatter.string(from: self)
         }
     }
 }
