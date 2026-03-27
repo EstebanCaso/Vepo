@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- BLE Usage Description (required for CoreBluetooth) -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Vepo connects to your smart water bottle via Bluetooth to automatically detect when you drink and remind you to stay hydrated.</string>
+
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Vepo needs Bluetooth access to communicate with your smart water bottle.</string>
+
+	<!-- Background Modes -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+		<string>processing</string>
+	</array>
+
+	<!-- Notification Usage -->
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Vepo sends gentle reminders when it has been a while since your last drink.</string>
+
+	<!-- App Transport Security (default: enforce) -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+
+	<!-- Supported interface orientations (portrait only for simplicity) -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+
+	<!-- Launch screen -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchScreenBackground</string>
+	</dict>
+
+	<!-- App metadata -->
+	<key>CFBundleDisplayName</key>
+	<string>Vepo</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+
+	<key>CFBundleVersion</key>
+	<string>1</string>
+
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
+	<key>MinimumOSVersion</key>
+	<string>17.0</string>
+</dict>
+</plist>
