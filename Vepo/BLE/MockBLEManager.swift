@@ -33,15 +33,25 @@ final class MockBLEManager: @unchecked Sendable {
 
     let sensorReadings: AsyncStream<SensorReading>
     private var sensorContinuation: AsyncStream<SensorReading>.Continuation?
+    /// Mock doesn't simulate bottle line-protocol — it only synthesizes IMU
+    /// readings that drive the FSM. Exposed so it conforms to the protocol.
+    let bottleMessages: AsyncStream<BottleMessage>
+    private var bottleContinuation: AsyncStream<BottleMessage>.Continuation?
     private var simulationTask: Task<Void, Never>?
     private var lastDrinkTime: Date = .now
 
     init() {
-        var storedContinuation: AsyncStream<SensorReading>.Continuation?
+        var storedSensor: AsyncStream<SensorReading>.Continuation?
         sensorReadings = AsyncStream { continuation in
-            storedContinuation = continuation
+            storedSensor = continuation
         }
-        sensorContinuation = storedContinuation
+        sensorContinuation = storedSensor
+
+        var storedBottle: AsyncStream<BottleMessage>.Continuation?
+        bottleMessages = AsyncStream { continuation in
+            storedBottle = continuation
+        }
+        bottleContinuation = storedBottle
     }
 
     // MARK: - Simulated Actions

@@ -89,6 +89,32 @@ final class DrinkDetector {
         }
     }
 
+    /// Consume pre-detected bottle messages from firmware that does drink
+    /// detection on-device (current Vepo firmware). For each `.drink` we
+    /// build a `DrinkEvent` directly and skip the IMU FSM entirely.
+    func startConsumingBottleMessages(_ messages: AsyncStream<BottleMessage>) async {
+        for await message in messages {
+            handle(message)
+        }
+    }
+
+    func handle(_ message: BottleMessage) {
+        guard case .drink(let receivedAt, _, _) = message else { return }
+
+        let timeSinceLast = lastEventTimestamp.map { receivedAt.timeIntervalSince($0) }
+        let event = DrinkEvent(
+            timestamp: receivedAt,
+            // Bottle doesn't report duration — use the FSM minimum as a placeholder
+            // so persisted events look reasonable in the log.
+            eventDuration: SensorConstants.minEventDuration,
+            timeSinceLastDrink: timeSinceLast
+        )
+
+        lastEventTimestamp = receivedAt
+        eventContinuation.yield(event)
+        AppLogger.detection.info("Drink event from bottle firmware (gap: \(timeSinceLast.map { String(format: "%.1fs", $0) } ?? "first"))")
+    }
+
     // MARK: - FSM Transitions
 
     private func transition(

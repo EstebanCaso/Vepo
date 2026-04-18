@@ -66,12 +66,36 @@ struct SensorPacketParserTests {
         }
     }
 
-    @Test("Rejects too-long packet")
+    @Test("Rejects too-long binary-looking packet")
     func rejectsTooLong() {
-        let longData = Data(repeating: 0, count: 40)
+        // Random non-UTF8-decodable bytes at unexpected length should fail —
+        // ASCII parse can't extract numbers and binary path requires 28 bytes.
+        let longData = Data(repeating: 0xFF, count: 40)
         #expect(throws: SensorPacketParser.ParseError.self) {
             try SensorPacketParser.parse(longData)
         }
+    }
+
+    // MARK: - ASCII (NUS) packets
+
+    @Test("Parses CSV ASCII packet from ESP32 firmware")
+    func parsesASCIIPacket() throws {
+        let csv = "0.12,-0.05,0.98,1.5,-0.3,0.0\n"
+        let reading = try SensorPacketParser.parse(Data(csv.utf8))
+
+        // Acceleration < 3 m/s² magnitude triggers g→m/s² conversion.
+        #expect(abs(reading.accZ - 0.98 * 9.80665) < 0.01)
+        #expect(abs(reading.gyroX - 1.5) < 0.01)
+    }
+
+    @Test("Parses ASCII packet with leading label and trailing timestamp")
+    func parsesASCIIWithLabelAndTimestamp() throws {
+        let line = "IMU: 9.81, 0.10, -0.20, 12.0, -3.5, 1.1, 12345\n"
+        let reading = try SensorPacketParser.parse(Data(line.utf8))
+
+        // Magnitude already in m/s², no rescale.
+        #expect(abs(reading.accX - 9.81) < 0.01)
+        #expect(abs(reading.gyroX - 12.0) < 0.01)
     }
 
     @Test("Rejects packet with NaN values")

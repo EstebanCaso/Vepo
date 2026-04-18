@@ -25,10 +25,22 @@ struct SessionSummaryView: View {
                     // Stats cards
                     statsRow
 
+                    // Today's hourly rhythm
+                    if viewModel.totalEventsToday > 0 {
+                        rhythmCard
+                            .staggeredAppear(index: 5)
+                    }
+
+                    // Recent drinks list
+                    if !viewModel.recentEvents.isEmpty {
+                        recentDrinksCard
+                            .staggeredAppear(index: 6)
+                    }
+
                     // Last drink info pill
                     if let lastDrink = viewModel.lastDrinkTime {
                         lastDrinkPill(time: lastDrink.shortTimeString)
-                            .staggeredAppear(index: 5)
+                            .staggeredAppear(index: 7)
                     }
                 }
                 .padding(VepoTheme.Layout.screenPadding)
@@ -37,6 +49,68 @@ struct SessionSummaryView: View {
             .navigationTitle("Vepo")
             .task {
                 await viewModel.start()
+            }
+        }
+    }
+
+    // MARK: - Rhythm Card
+
+    private var rhythmCard: some View {
+        VStack(alignment: .leading, spacing: VepoTheme.Spacing.sm) {
+            VepoSectionHeader(title: "Today's rhythm")
+
+            DailyRhythmView(
+                hourlyCounts: viewModel.hourlyCountsToday,
+                currentHour: Calendar.current.component(.hour, from: .now)
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .vepoCardStyle()
+    }
+
+    // MARK: - Recent Drinks
+
+    private var recentDrinksCard: some View {
+        VStack(alignment: .leading, spacing: VepoTheme.Spacing.sm) {
+            VepoSectionHeader(title: "Recent drinks")
+
+            VStack(spacing: VepoTheme.Spacing.xs) {
+                ForEach(viewModel.recentEvents, id: \.id) { event in
+                    recentRow(event: event)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .vepoCardStyle()
+    }
+
+    private func recentRow(event: DrinkEvent) -> some View {
+        HStack(spacing: VepoTheme.Spacing.sm) {
+            Image(systemName: "drop.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(VepoTheme.Colors.accent)
+                .frame(width: 22, height: 22)
+                .background(VepoTheme.Colors.accentSoft)
+                .clipShape(Circle())
+
+            Text(event.timestamp.shortTimeString)
+                .font(VepoTheme.Typography.subheadline.monospacedDigit())
+                .foregroundStyle(VepoTheme.Colors.textPrimary)
+
+            Spacer()
+
+            if let gap = event.timeSinceLastDrink, gap > 0 {
+                Text("+ \(gap.durationDisplay)")
+                    .font(VepoTheme.Typography.caption.monospacedDigit())
+                    .foregroundStyle(VepoTheme.Colors.textSecondary)
+                    .padding(.horizontal, VepoTheme.Spacing.xs)
+                    .padding(.vertical, 2)
+                    .background(VepoTheme.Colors.disabled.opacity(0.25))
+                    .clipShape(Capsule())
+            } else {
+                Text("first today")
+                    .font(VepoTheme.Typography.caption)
+                    .foregroundStyle(VepoTheme.Colors.textTertiary)
             }
         }
     }

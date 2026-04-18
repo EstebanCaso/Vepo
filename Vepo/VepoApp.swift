@@ -99,6 +99,8 @@ struct VepoApp: App {
                         await mock.simulateConnect()
                         await drinkDetector.startProcessing(mock.sensorReadings)
                     } else {
+                        // Current firmware emits pre-detected DRINK events;
+                        // legacy raw-IMU stream stays wired for forward compat.
                         await drinkDetector.startProcessing(bleManager.sensorReadings)
                     }
 
@@ -108,13 +110,25 @@ struct VepoApp: App {
                     }
                 }
                 .task {
-                    // Persist events, reschedule notifications, haptic feedback
+                    // Consume bottle line-protocol messages (DRINK, TERMO_READY).
+                    // Drinks become DrinkEvents directly without going through the IMU FSM.
+                    await drinkDetector.startConsumingBottleMessages(bleManager.bottleMessages)
+                }
+                .task {
+                    // Single consumer of the drink-event stream. AsyncStream is
+                    // not multicast, so we MUST do persistence + UI refresh here
+                    // — splitting them across two `for await`s causes a race where
+                    // each loop only sees half the events.
                     for await event in drinkDetector.drinkEvents {
                         // Link event to current session before saving
                         if let session = try? await dataStore.fetchCurrentSession() {
                             event.session = session
                         }
                         try? await dataStore.saveDrinkEvent(event)
+
+                        // Refresh the live dashboard + event log immediately.
+                        await sessionVM.refreshStats()
+                        await eventLogVM.loadEvents()
 
                         // Load user settings for notification behavior
                         let settings = try? await dataStore.loadSettings()

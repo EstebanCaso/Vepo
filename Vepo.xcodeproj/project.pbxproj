@@ -13,6 +13,7 @@
 		184BA7D3BF3798A21BA5CD95 /* LocalDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0217AD8BA60A8D3659399AF5 /* LocalDataStore.swift */; };
 		21F834F9E467491477F86ADB /* PulsingIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF3ED298990DF7F756D0C85 /* PulsingIndicator.swift */; };
 		2618D8847EC456233178A290 /* SensorPacketParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DC0476BB4B2C7ECBF3E0768 /* SensorPacketParserTests.swift */; };
+		7BC1A3D1F0E2C9A1B5034503 /* BottleMessageParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BC1A3D1F0E2C9A1B5034502 /* BottleMessageParserTests.swift */; };
 		2AB95DB73BCBF7837FEF33CC /* BLEConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50E62BF6171F0F6A18957D93 /* BLEConstants.swift */; };
 		2D0592090CFD4A46260181C7 /* SessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15995DD6983EDC3BE306731D /* SessionViewModelTests.swift */; };
 		3166B08144AF304AA3C18A92 /* HapticService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2518640672B630F5D69C51B5 /* HapticService.swift */; };
@@ -22,6 +23,7 @@
 		50A7A4C4BA61CD49454DFC03 /* Date+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE581E25F2C0002195BBD482 /* Date+Formatting.swift */; };
 		597BB87D4D03053541E98669 /* EventRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36C5A89DFAD742E45D17EFE9 /* EventRow.swift */; };
 		5CB64411FB11A80BFAAE7A87 /* SensorPacketParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63717DA1ECBF47A3F2C071F0 /* SensorPacketParser.swift */; };
+		7BC1A3D1F0E2C9A1B5034501 /* BottleMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BC1A3D1F0E2C9A1B5034500 /* BottleMessage.swift */; };
 		60D3E0B6867C0B45DB2E33EE /* DrinkEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC46BCB6EEA229D2B8944FD7 /* DrinkEvent.swift */; };
 		61BB7A405CA8BA727A6FCD27 /* NotificationServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7A13FD80D4387E0F635CAE /* NotificationServiceProtocol.swift */; };
 		637B41CC9ECDED7920F461D2 /* DrinkDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C4BE8894CBFBE39CECF9729 /* DrinkDetector.swift */; };
@@ -37,8 +39,10 @@
 		9961E9B04D11B8B448E7B167 /* ConnectionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2D61FB10B925559CB4BED8 /* ConnectionStatusView.swift */; };
 		AA56C772EC6E29397B79D8E1 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 509818D37E7A948C1CBB1D73 /* UserSettings.swift */; };
 		B31B8748CA3B7705F803BD52 /* LiveCounterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE8E85010D2DD0AD945180AC /* LiveCounterView.swift */; };
+		8DC1A3D1F0E2C9A1B5034601 /* DailyRhythmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DC1A3D1F0E2C9A1B5034600 /* DailyRhythmView.swift */; };
 		B72A7ED1DEF6EBE499AB7182 /* SignalProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D354A278FBD3DA8469BED6 /* SignalProcessorTests.swift */; };
 		B907F6EF9F44A27CB0821266 /* EventLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC0293F55CE987AFCAB319F4 /* EventLogView.swift */; };
+		BD146E58A0E1FB37892D8400 /* BLEDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD146E58A0E1FB37892D8401 /* BLEDiagnosticsView.swift */; };
 		BD5A556481B2E387EFA2E700 /* DrinkDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9D9B687B21DE6C049449A24 /* DrinkDetectorTests.swift */; };
 		BE1F8ECE67C04B8082B0B9A7 /* SensorConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E558EC1C66BAF623C9F6FBA1 /* SensorConstants.swift */; };
 		C3ED3CD7738980A9FDC1B2CE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02E506F402FFA964F3DC0F9 /* ContentView.swift */; };
@@ -69,6 +73,7 @@
 		0BCE0FEAF5FD8F5A687491F6 /* BLEManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEManager.swift; sourceTree = "<group>"; };
 		0D55A9F44AA090AAE8CC521E /* SensorReading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorReading.swift; sourceTree = "<group>"; };
 		0DC0476BB4B2C7ECBF3E0768 /* SensorPacketParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorPacketParserTests.swift; sourceTree = "<group>"; };
+		7BC1A3D1F0E2C9A1B5034502 /* BottleMessageParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleMessageParserTests.swift; sourceTree = "<group>"; };
 		15995DD6983EDC3BE306731D /* SessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModelTests.swift; sourceTree = "<group>"; };
 		1FC7396AAB441CBB72D6B7E2 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		2518640672B630F5D69C51B5 /* HapticService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticService.swift; sourceTree = "<group>"; };
@@ -88,16 +93,19 @@
 		5DA099A49501EB674D831895 /* BLEManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEManagerProtocol.swift; sourceTree = "<group>"; };
 		5E7A13FD80D4387E0F635CAE /* NotificationServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationServiceProtocol.swift; sourceTree = "<group>"; };
 		63717DA1ECBF47A3F2C071F0 /* SensorPacketParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorPacketParser.swift; sourceTree = "<group>"; };
+		7BC1A3D1F0E2C9A1B5034500 /* BottleMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleMessage.swift; sourceTree = "<group>"; };
 		6C4BE8894CBFBE39CECF9729 /* DrinkDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrinkDetector.swift; sourceTree = "<group>"; };
 		77E4A7CF85B8EBC551E87F25 /* VepoTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VepoTheme.swift; sourceTree = "<group>"; };
-		881E728AE0950A8D43D5FD0B /* Vepo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Vepo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		881E728AE0950A8D43D5FD0B /* Vepo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vepo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9E33800B187A055D3D8C0366 /* HydrationSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HydrationSession.swift; sourceTree = "<group>"; };
 		9E74D9FF69B88A520AF824AB /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		9ED03B39742FF8E9761F4A0F /* MockBLEManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockBLEManager.swift; sourceTree = "<group>"; };
 		A228FE388012B883DB142578 /* LocalDataStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDataStoreTests.swift; sourceTree = "<group>"; };
 		A4FD614856BFC1FBC252071D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B9D9B687B21DE6C049449A24 /* DrinkDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrinkDetectorTests.swift; sourceTree = "<group>"; };
+		BD146E58A0E1FB37892D8401 /* BLEDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEDiagnosticsView.swift; sourceTree = "<group>"; };
 		BE8E85010D2DD0AD945180AC /* LiveCounterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCounterView.swift; sourceTree = "<group>"; };
+		8DC1A3D1F0E2C9A1B5034600 /* DailyRhythmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyRhythmView.swift; sourceTree = "<group>"; };
 		D4D354A278FBD3DA8469BED6 /* SignalProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalProcessorTests.swift; sourceTree = "<group>"; };
 		DC0293F55CE987AFCAB319F4 /* EventLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLogView.swift; sourceTree = "<group>"; };
 		E558EC1C66BAF623C9F6FBA1 /* SensorConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorConstants.swift; sourceTree = "<group>"; };
@@ -186,6 +194,7 @@
 				5DA099A49501EB674D831895 /* BLEManagerProtocol.swift */,
 				9ED03B39742FF8E9761F4A0F /* MockBLEManager.swift */,
 				63717DA1ECBF47A3F2C071F0 /* SensorPacketParser.swift */,
+				7BC1A3D1F0E2C9A1B5034500 /* BottleMessage.swift */,
 			);
 			path = BLE;
 			sourceTree = "<group>";
@@ -250,6 +259,7 @@
 		AB9BCEE17BD91AD99C3FAC48 /* Connection */ = {
 			isa = PBXGroup;
 			children = (
+				BD146E58A0E1FB37892D8401 /* BLEDiagnosticsView.swift */,
 				3B2D61FB10B925559CB4BED8 /* ConnectionStatusView.swift */,
 				3EF3ED298990DF7F756D0C85 /* PulsingIndicator.swift */,
 			);
@@ -260,6 +270,7 @@
 			isa = PBXGroup;
 			children = (
 				0DC0476BB4B2C7ECBF3E0768 /* SensorPacketParserTests.swift */,
+				7BC1A3D1F0E2C9A1B5034502 /* BottleMessageParserTests.swift */,
 			);
 			path = BLE;
 			sourceTree = "<group>";
@@ -268,6 +279,7 @@
 			isa = PBXGroup;
 			children = (
 				BE8E85010D2DD0AD945180AC /* LiveCounterView.swift */,
+				8DC1A3D1F0E2C9A1B5034600 /* DailyRhythmView.swift */,
 				0A23D590C17BF3DE8D4FE396 /* SessionSummaryView.swift */,
 				4F33117F8593E7AF882ADC07 /* StatCard.swift */,
 			);
@@ -394,8 +406,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1640;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = 8E7FFB921D8816AECD82C1D5 /* Build configuration list for PBXProject "Vepo" */;
 			developmentRegion = en;
@@ -426,6 +436,7 @@
 				F2CC3F5B9EDD60EF1A6E8295 /* IntegrationTests.swift in Sources */,
 				DE53264257CB36C9BCF5990A /* LocalDataStoreTests.swift in Sources */,
 				2618D8847EC456233178A290 /* SensorPacketParserTests.swift in Sources */,
+				7BC1A3D1F0E2C9A1B5034503 /* BottleMessageParserTests.swift in Sources */,
 				2D0592090CFD4A46260181C7 /* SessionViewModelTests.swift in Sources */,
 				B72A7ED1DEF6EBE499AB7182 /* SignalProcessorTests.swift in Sources */,
 			);
@@ -437,6 +448,7 @@
 			files = (
 				83B496020257246E66BFEB50 /* AppLogger.swift in Sources */,
 				2AB95DB73BCBF7837FEF33CC /* BLEConstants.swift in Sources */,
+				BD146E58A0E1FB37892D8400 /* BLEDiagnosticsView.swift in Sources */,
 				02DB196A1E41F3B6F3A5EF41 /* BLEManager.swift in Sources */,
 				71699DB6DF109E8C3BF3B973 /* BLEManagerProtocol.swift in Sources */,
 				9961E9B04D11B8B448E7B167 /* ConnectionStatusView.swift in Sources */,
@@ -453,6 +465,7 @@
 				3166B08144AF304AA3C18A92 /* HapticService.swift in Sources */,
 				77F7FDB784F3131AC2B8A35E /* HydrationSession.swift in Sources */,
 				B31B8748CA3B7705F803BD52 /* LiveCounterView.swift in Sources */,
+				8DC1A3D1F0E2C9A1B5034601 /* DailyRhythmView.swift in Sources */,
 				184BA7D3BF3798A21BA5CD95 /* LocalDataStore.swift in Sources */,
 				65D60143BFD0037E1BC399D6 /* MockBLEManager.swift in Sources */,
 				E861CDC8028D08817142C00B /* NotificationService.swift in Sources */,
@@ -461,6 +474,7 @@
 				21F834F9E467491477F86ADB /* PulsingIndicator.swift in Sources */,
 				BE1F8ECE67C04B8082B0B9A7 /* SensorConstants.swift in Sources */,
 				5CB64411FB11A80BFAAE7A87 /* SensorPacketParser.swift in Sources */,
+				7BC1A3D1F0E2C9A1B5034501 /* BottleMessage.swift in Sources */,
 				31BE1E53BBEF225901AD9A42 /* SensorReading.swift in Sources */,
 				C8E0B798592DD7218EC7D412 /* SessionSummaryView.swift in Sources */,
 				11956221AE3D3371EAB310C9 /* SessionViewModel.swift in Sources */,
@@ -611,6 +625,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Vepo/Vepo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 83SZ46V355;
 				INFOPLIST_FILE = Vepo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -629,6 +644,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Vepo/Vepo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 83SZ46V355;
 				INFOPLIST_FILE = Vepo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

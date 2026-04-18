@@ -10,7 +10,6 @@ final class SessionViewModel {
     private let dataStore: LocalDataStore
     private let drinkDetector: DrinkDetector
     private var timerTask: Task<Void, Never>?
-    private var eventListenerTask: Task<Void, Never>?
 
     // MARK: - Live State
 
@@ -20,6 +19,13 @@ final class SessionViewModel {
     var timeSinceLastDrink: TimeInterval = 0
     var lastDrinkTime: Date?
     var reminderThresholdMinutes: Int = 60
+
+    /// Most recent events today (newest first), capped to 4 for the dashboard list.
+    var recentEvents: [DrinkEvent] = []
+
+    /// Drink count per hour of the day (24 entries, index = hour 0–23).
+    /// Drives the small "today's rhythm" bar chart.
+    var hourlyCountsToday: [Int] = Array(repeating: 0, count: 24)
 
     /// Color intensity based on time since last drink (0.0 = just drank, 1.0 = overdue)
     var urgencyLevel: Double {
@@ -44,21 +50,11 @@ final class SessionViewModel {
         await refreshStats()
         await loadThreshold()
         startLiveCounter()
-
-        // Listen for new drink events via the multicast stream
-        eventListenerTask = Task { @MainActor [weak self] in
-            guard let self else { return }
-            for await _ in drinkDetector.drinkEvents {
-                await self.refreshStats()
-            }
-        }
     }
 
     func stop() {
         timerTask?.cancel()
         timerTask = nil
-        eventListenerTask?.cancel()
-        eventListenerTask = nil
     }
 
     // MARK: - Stats
@@ -79,6 +75,17 @@ final class SessionViewModel {
             }
 
             lastDrinkTime = todayEvents.first?.timestamp
+            recentEvents = Array(todayEvents.prefix(4))
+
+            // Bucket today's events by hour of day for the rhythm bar chart.
+            let calendar = Calendar.current
+            var counts = Array(repeating: 0, count: 24)
+            for event in todayEvents {
+                let hour = calendar.component(.hour, from: event.timestamp)
+                if (0..<24).contains(hour) { counts[hour] += 1 }
+            }
+            hourlyCountsToday = counts
+
             updateTimeSinceLastDrink()
         } catch {
             AppLogger.persistence.error("Failed to refresh stats: \(error.localizedDescription)")

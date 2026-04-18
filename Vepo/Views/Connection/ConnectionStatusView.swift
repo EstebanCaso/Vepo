@@ -7,30 +7,46 @@ struct ConnectionStatusView: View {
     @Environment(ConnectionViewModel.self) private var viewModel
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         NavigationStack {
             ScrollView {
                 VStack(spacing: VepoTheme.Spacing.lg) {
-                    // Status indicator
                     statusSection
                         .staggeredAppear(index: 0)
 
-                    // Action button
                     actionButton
                         .staggeredAppear(index: 1)
 
-                    // Discovered peripherals
-                    if !viewModel.discoveredPeripherals.isEmpty {
+                    if !viewModel.discoveredDevices.isEmpty {
                         peripheralsList
+                    } else if viewModel.showsEmptyResults {
+                        emptyResultsCard
+                            .staggeredAppear(index: 2)
                     }
 
-                    // Help text
                     helpText
-                        .staggeredAppear(index: 2)
+                        .staggeredAppear(index: 3)
                 }
                 .padding(VepoTheme.Layout.screenPadding)
             }
             .background(VepoTheme.Colors.background)
             .navigationTitle("Bottle")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        viewModel.openDiagnostics()
+                    } label: {
+                        Image(systemName: "stethoscope")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .accessibilityLabel("Open BLE Diagnostics")
+                }
+            }
+            .sheet(isPresented: $viewModel.showDiagnostics) {
+                BLEDiagnosticsView()
+                    .environment(viewModel)
+            }
         }
     }
 
@@ -104,16 +120,16 @@ struct ConnectionStatusView: View {
         VStack(alignment: .leading, spacing: VepoTheme.Spacing.sm) {
             VepoSectionHeader(title: "Nearby Bottles")
 
-            ForEach(Array(viewModel.discoveredPeripherals.enumerated()), id: \.element.identifier) { index, peripheral in
-                peripheralRow(peripheral)
+            ForEach(Array(viewModel.sortedDevices.enumerated()), id: \.element.id) { index, device in
+                peripheralRow(device)
                     .staggeredAppear(index: index + 3)
             }
         }
     }
 
-    private func peripheralRow(_ peripheral: CBPeripheral) -> some View {
+    private func peripheralRow(_ device: DiscoveredDevice) -> some View {
         Button {
-            Task { await viewModel.connect(to: peripheral) }
+            Task { await viewModel.connect(to: device) }
         } label: {
             HStack(spacing: VepoTheme.Spacing.sm) {
                 Image(systemName: "waterbottle")
@@ -124,13 +140,31 @@ struct ConnectionStatusView: View {
                     .clipShape(RoundedRectangle(cornerRadius: VepoTheme.Radius.small))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(peripheral.name ?? "Unknown Bottle")
-                        .font(VepoTheme.Typography.headline)
-                        .foregroundStyle(VepoTheme.Colors.textPrimary)
+                    HStack(spacing: VepoTheme.Spacing.xs) {
+                        Text(device.displayName)
+                            .font(VepoTheme.Typography.headline)
+                            .foregroundStyle(VepoTheme.Colors.textPrimary)
 
-                    Text(peripheral.identifier.uuidString.prefix(8) + "...")
-                        .font(VepoTheme.Typography.caption)
-                        .foregroundStyle(VepoTheme.Colors.textTertiary)
+                        if device.isVepoCandidate {
+                            Text("Vepo")
+                                .font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(VepoTheme.Colors.accent.opacity(0.15))
+                                .foregroundStyle(VepoTheme.Colors.accent)
+                                .clipShape(Capsule())
+                        }
+                    }
+
+                    HStack(spacing: VepoTheme.Spacing.xs) {
+                        Image(systemName: rssiIcon(for: device.rssi))
+                            .font(.system(size: 10, weight: .medium))
+                        Text("\(device.rssi) dBm")
+                        Text("·")
+                        Text(device.peripheral.identifier.uuidString.prefix(8) + "...")
+                    }
+                    .font(VepoTheme.Typography.caption)
+                    .foregroundStyle(VepoTheme.Colors.textTertiary)
                 }
 
                 Spacer()
@@ -142,7 +176,33 @@ struct ConnectionStatusView: View {
             .vepoCardStyle()
         }
         .buttonStyle(VepoPressFeedback())
-        .accessibilityLabel("Connect to \(peripheral.name ?? "unknown bottle")")
+        .accessibilityLabel("Connect to \(device.displayName), signal \(device.rssi) dBm")
+    }
+
+    private func rssiIcon(for rssi: Int) -> String {
+        if rssi >= -75 { return "wifi" }
+        if rssi >= -90 { return "wifi.exclamationmark" }
+        return "wifi.slash"
+    }
+
+    // MARK: - Empty Results
+
+    private var emptyResultsCard: some View {
+        VStack(alignment: .leading, spacing: VepoTheme.Spacing.sm) {
+            VepoSectionHeader(title: "No bottles found")
+
+            Text("Make sure your Vepo bottle is powered on and within ~10 meters. If it's on but still doesn't appear, open BLE Diagnostics to see every nearby device.")
+                .font(VepoTheme.Typography.subheadline)
+                .foregroundStyle(VepoTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VepoButton("Open BLE Diagnostics", icon: "stethoscope", style: .secondary) {
+                viewModel.openDiagnostics()
+            }
+            .padding(.top, VepoTheme.Spacing.xs)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .vepoCardStyle()
     }
 
     // MARK: - Help Text
